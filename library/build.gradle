@@ -1,0 +1,64 @@
+buildscript{
+    repositories{
+        jcenter()
+    }
+    dependencies{
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:0.5"
+    }
+}
+
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+apply plugin: 'com.android.library'
+
+def projectVersionName = '1.0.2'
+
+group = "me.yuichi0301.cbutton"
+version = projectVersionName
+
+repositories{
+    mavenCentral()
+}
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        minSdkVersion 4
+        targetSdkVersion 21
+        versionCode 1
+        versionName projectVersionName
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+publishing {
+    publications {
+        mod(MavenPublication) {
+            groupId 'me.yuichi0301'
+            artifactId 'cbutton'
+            version projectVersionName
+            artifact source: file("${project.buildDir}/outputs/aar/${project.name}-release.aar")
+        }
+    }
+}
+bintray{
+    user = project.hasProperty("bintrayUser") ? bintrayUser : ""
+    key = project.hasProperty("bintrayKey") ? bintrayKey : ""
+    publications = ["mod"]
+    publish = true
+    pkg{
+        repo = "android-color-button"
+        name = "my-pkg"
+    }
+}
