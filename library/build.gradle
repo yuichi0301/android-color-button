@@ -1,9 +1,19 @@
-buildscript{
-    repositories{
+import groovyx.net.http.HTTPBuilder
+import static groovyx.net.http.ContentType.*
+import static groovyx.net.http.Method.*
+
+
+buildscript {
+    repositories {
         jcenter()
+        maven {
+            url 'http://ift.tt/1kMOnnD'
+        }
     }
-    dependencies{
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:0.5"
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.0.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.6'
+        classpath 'org.codehaus.groovy.modules.http-builder:http-builder:0.5.2'
     }
 }
 
@@ -11,7 +21,7 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'com.android.library'
 
-def projectVersionName = '1.0.2'
+def projectVersionName = '1.0.4'
 
 group = "me.yuichi0301.cbutton"
 version = projectVersionName
@@ -42,16 +52,83 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
 
-publishing {
-    publications {
-        mod(MavenPublication) {
-            groupId 'me.yuichi0301'
-            artifactId 'cbutton'
-            version projectVersionName
-            artifact source: file("${project.buildDir}/outputs/aar/${project.name}-release.aar")
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.source
+}
+
+task androidJavadocsJar(type: Jar) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.source
+}
+
+task signBintrayPackage << {
+
+    println bintray.apiUrl
+    println "/gpg/${bintrayUser}/${bintray.pkg.repo}/${bintray.pkg.name}/versions/${project.version}"
+
+    final http = new HTTPBuilder(bintray.apiUrl)
+    http.auth.basic bintrayUser, bintrayKey
+    http.request(POST,JSON) {
+        uri.path = "/gpg/${bintrayUser}/${bintray.pkg.repo}/${bintray.pkg.name}/versions/${project.version}"
+        body = [passphrase: signKeyPassphrase]
+        response.success = { resp ->
+            logger.info("Signed version ${project.version}.")
+        }
+        response.failure = { resp ->
+            throw new GradleException("Could not sign version ${project.version}:$resp.statusLine")
+
         }
     }
 }
+
+publishing {
+    publications {
+        mod(MavenPublication) {
+            artifact androidSourcesJar
+            artifact androidJavadocsJar
+
+            groupId 'me.yuichi0301.cbutton'
+            artifactId 'cbutton'
+            version projectVersionName
+            artifact source: file("${project.buildDir}/outputs/aar/${project.name}-release.aar")
+            final customPom = {
+                name "Android Color Button"
+                url "https://github.com/YuichiUchida/android-color-button"
+                description "Android Color Button"
+                licenses {
+                    license {
+                        name "The MIT License (MIT)"
+                        url "http://opensource.org/licenses/MIT"
+                        distribution "repo"
+                    }
+                }
+                scm {
+                    url "https://github.com/YuichiUchida/android-color-button.git"
+                    connection "scm:git@github.com:YuichiUchida/android-color-button.git"
+                }
+                developers {
+                    developer {
+                        id "YuichiUchida"
+                        name "Yuichi Uchida"
+                        email "yuichi0301@gmail.com"
+                    }
+                }
+            }
+            customPom.resolveStrategy = Closure.DELEGATE_FIRST
+
+            pom.withXml { xml ->
+                final root = xml.asNode()
+                root.children().last() + customPom
+            }
+        }
+    }
+}
+
 bintray{
     user = project.hasProperty("bintrayUser") ? bintrayUser : ""
     key = project.hasProperty("bintrayKey") ? bintrayKey : ""
