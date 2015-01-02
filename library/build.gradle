@@ -21,9 +21,9 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'com.android.library'
 
-def projectVersionName = '1.0.4'
+def projectVersionName = '1.0.5'
 
-group = "me.yuichi0301.cbutton"
+group = "me.yuichi0301"
 version = projectVersionName
 
 repositories{
@@ -92,7 +92,7 @@ publishing {
             artifact androidSourcesJar
             artifact androidJavadocsJar
 
-            groupId 'me.yuichi0301.cbutton'
+            groupId 'me.yuichi0301'
             artifactId 'cbutton'
             version projectVersionName
             artifact source: file("${project.buildDir}/outputs/aar/${project.name}-release.aar")
