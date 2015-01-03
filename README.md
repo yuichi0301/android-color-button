@@ -1,6 +1,18 @@
 android-color-button
 ====================
 
+Using Maven
+-----
+
+<p>ColorButton Library is pushed to <a href="http://search.maven.org/#search%7Cga%7C1%7Ccbutton">Maven Central</a>, so you just need to add the following dependency to your <code>build.gradle</code>.</p>
+
+<pre><code>dependencies {
+    compile 'me.yuichi0301:cbutton:1.0.6'
+}
+</code></pre>
+
+<h3>
+
 Usage
 -----
 
